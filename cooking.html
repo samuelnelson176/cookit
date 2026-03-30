@@ -1,0 +1,1130 @@
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plated — Learn simple dishes & beautiful plating</title>
+<meta name="description" content="A friendly, hands-on cookbook for simple dishes with step-by-step recipes, smart scaling, and plating ideas you can actually use at home." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+<style>
+  :root { color-scheme: light dark; }
+  * { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  .serif { font-family: 'Newsreader', Georgia, serif; }
+  .glass { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .scrollbar-hide { -ms-overflow-style:none; scrollbar-width:none; }
+  .scrollbar-hide::-webkit-scrollbar{ display:none; }
+  .shadows { box-shadow: 0 10px 25px -10px rgba(0,0,0,.25), 0 4px 10px -6px rgba(0,0,0,.1); }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
+  .animate-in { animation: fadeUp .5s ease-out both; }
+  /* Print styles */
+  @media print {
+    header, .no-print, .planner, .filters, .shopping { display:none !important; }
+    body { background: white; color: black; }
+    .card { break-inside: avoid; box-shadow:none; border:1px solid #ddd; }
+  }
+</style>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'
+          },
+          ink: '#0b1220'
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body class="bg-[#FAFAF8] text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased" x-data="kitchenApp()" x-init="init()" @keydown.escape="closeModal()">
+  <!-- Skip link -->
+  <a href="#recipes" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:bg-white focus:text-black focus:px-3 focus:py-2 focus:rounded">Skip to recipes</a>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-slate-200/70 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 glass">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-emerald-700 grid place-items-center shadows">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h16M6 7v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="font-extrabold tracking-tight text-lg leading-none">Plated</div>
+            <div class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 -mt-0.5">Simple dishes, stylish plates</div>
+          </div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-3 flex-1 max-w-2xl mx-6">
+          <div class="relative flex-1">
+            <input x-model.debounce.300ms="searchQuery" type="search" placeholder="Search recipes, ingredients, techniques…" class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/50" aria-label="Search" />
+            <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <button @click="toggleFavoritesOnly()" :class="favoritesOnly ? 'bg-brand-600 text-white' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'" class="px-3 py-2.5 rounded-xl text-sm font-medium shadows hover:translate-y-[-1px] transition">
+            <span class="inline-flex items-center gap-2">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.6-9.5-8.2C.3 9.7 2 5.7 5.6 5.1c2-.3 3.6.6 4.4 1.6.8-1 2.4-1.9 4.4-1.6 3.6.6 5.3 4.6 3.1 7.7C19 16.4 12 21 12 21z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Favorites
+            </span>
+          </button>
+          <button @click="toggleDark()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:translate-y-[-1px] transition" aria-label="Toggle dark mode">
+            <svg x-show="!dark" class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.95 6.95-1.41-1.41M7.46 7.46 6.05 6.05m0 11.9 1.41-1.41M16.54 7.46l1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <svg x-show="dark" class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button class="md:hidden p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="drawer=true" aria-label="Open filters">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button class="hidden md:inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-ink text-white dark:bg-white dark:text-slate-900 shadows hover:translate-y-[-1px] transition" @click="openPlanner=true">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 9h14l-1.5 9.5a2 2 0 0 1-2 1.5H8.5a2 2 0 0 1-2-1.5L5 9Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Plan & Shop
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Category tabs -->
+    <div class="border-t border-slate-200/70 dark:border-slate-800">
+      <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        <div class="flex gap-2 overflow-x-auto scrollbar-hide py-2">
+          <template x-for="cat in categories" :key="cat">
+            <button @click="activeCategory=cat" :class="activeCategory===cat ? 'bg-ink text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'"
+              class="whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm font-medium transition hover:translate-y-[-1px]">
+              <span x-text="cat"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-amber-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <div class="grid lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs font-semibold tracking-widest uppercase">
+            <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span> New • Pantry-friendly
+          </div>
+          <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+            Make simple dishes that <span class="serif italic">look like you tried harder</span>.
+          </h1>
+          <p class="mt-4 text-slate-600 dark:text-slate-300 text-lg max-w-xl">
+            Step-by-step recipes with smart scaling, technique tips, and plating patterns you can reuse for any meal.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="#recipes" class="px-5 py-3 rounded-xl bg-brand-600 text-white font-semibold shadows hover:bg-brand-700 transition">Browse recipes</a>
+            <button @click="openPlating=true" class="px-5 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-semibold hover:translate-y-[-1px] transition">Plating playbook</button>
+          </div>
+          <div class="mt-6 flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              Most dishes under 20 minutes
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              Scale to any servings
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-5">
+          <div class="relative rounded-[2rem] overflow-hidden shadows">
+            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&q=80&auto=format&fit=crop" alt="Colorful bowls and plates with healthy food" class="w-full h-[340px] md:h-[420px] object-cover" loading="eager" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%221200%22 height=%22800%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236b7280%22 font-family=%22Inter%22 font-size=%2232%22>Image</text></svg>'">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
+              <div class="text-xs uppercase tracking-widest opacity-80">Featured</div>
+              <div class="text-xl font-bold">Lemon Garlic Pasta — 15 min</div>
+              <div class="text-sm opacity-90">Silky sauce, bright lemon, and a restaurant-style swoosh.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="grid lg:grid-cols-12 gap-8">
+      <!-- Sidebar filters -->
+      <aside class="hidden lg:block lg:col-span-3 filters">
+        <div class="sticky top-24 space-y-6">
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadows">
+            <h3 class="font-bold text-lg">Filters</h3>
+            <div class="mt-4 space-y-4">
+              <div>
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">Diet</label>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                  <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" class="rounded border-slate-300 dark:border-slate-700" x-model="filters.veg"> Vegetarian
+                  </label>
+                  <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" class="rounded border-slate-300 dark:border-slate-700" x-model="filters.glutenFree"> Gluten-free
+                  </label>
+                  <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" class="rounded border-slate-300 dark:border-slate-700" x-model="filters.dairyFree"> Dairy-free
+                  </label>
+                  <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" class="rounded border-slate-300 dark:border-slate-700" x-model="filters.quick"> ≤ 15 min
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">Skill</label>
+                <select x-model="filters.skill" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <option value="">Any</option>
+                  <option>Beginner</option>
+                  <option>Easy</option>
+                  <option>Confident</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">Max time (min)</label>
+                <input type="range" min="5" max="60" step="5" x-model.number="filters.time" class="w-full">
+                <div class="text-xs text-slate-500" x-text="filters.time + ' min'"></div>
+              </div>
+              <button class="w-full mt-2 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:translate-y-[-1px] transition" @click="resetFilters()">Reset</button>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-white dark:from-slate-900 dark:to-slate-900 border border-emerald-100 dark:border-slate-800">
+            <div class="text-sm uppercase tracking-widest font-bold text-emerald-700 dark:text-emerald-300">Plating tip</div>
+            <p class="mt-2 text-sm text-slate-700 dark:text-slate-300">Use odd numbers. Clusters of 3 or 5 look intentional. Leave negative space on the plate.</p>
+            <button class="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300 underline" @click="openPlating=true">Open playbook</button>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadows">
+            <h3 class="font-bold text-lg">Shopping list</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400">Add recipes and we'll combine ingredients.</p>
+            <div class="mt-3 space-y-2 max-h-64 overflow-auto" id="shoppingList">
+              <template x-for="(item, idx) in shoppingList" :key="idx">
+                <div class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" class="rounded" x-model="item.done">
+                  <div :class="item.done ? 'line-through opacity-60' : ''" class="flex-1">
+                    <span x-text="item.qty"></span>
+                    <span x-text="item.unit"></span>
+                    <span x-text="item.name"></span>
+                    <span class="text-slate-500" x-show="item.notes" x-text="'('+item.notes+')'"></span>
+                  </div>
+                </div>
+              </template>
+              <div x-show="shoppingList.length===0" class="text-sm text-slate-500">No items yet. Add from a recipe.</div>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <button class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" @click="copyShopping()">Copy</button>
+              <button class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" @click="clearShopping()">Clear</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Recipes grid -->
+      <section id="recipes" class="lg:col-span-9">
+        <!-- Mobile search & filters -->
+        <div class="lg:hidden mb-4 flex gap-2">
+          <div class="relative flex-1">
+            <input x-model.debounce.300ms="searchQuery" type="search" placeholder="Search…" class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/50" />
+            <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <button class="px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="drawer=true">Filters</button>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Recipes</h2>
+          <div class="text-sm text-slate-600 dark:text-slate-400">
+            <span x-text="filteredRecipes.length"></span> results
+          </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="mt-5 grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <template x-for="r in filteredRecipes" :key="r.id">
+            <article class="card group rounded-[1.6rem] overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadows hover:-translate-y-1 transition">
+              <div class="relative">
+                <img :src="r.image" :alt="r.title" class="h-48 w-full object-cover" loading="lazy" @error="$event.target.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%221200%22 height=%22800%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236b7280%22 font-family=%22Inter%22 font-size=%2232%22>Image</text></svg>'">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                <button @click.stop="toggleFavorite(r.id)" class="absolute top-3 right-3 p-2 rounded-full bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" :aria-label="isFav(r.id) ? 'Remove from favorites' : 'Add to favorites'">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" :fill="isFav(r.id) ? 'currentColor' : 'none'" class="text-rose-500">
+                    <path d="M12 21s-7-4.6-9.5-8.2C.3 9.7 2 5.7 5.6 5.1c2-.3 3.6.6 4.4 1.6.8-1 2.4-1.9 4.4-1.6 3.6.6 5.3 4.6 3.1 7.7C19 16.4 12 21 12 21z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="absolute bottom-3 left-3 flex gap-2">
+                  <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" x-text="r.time + ' min'"></span>
+                  <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" x-text="r.difficulty"></span>
+                </div>
+              </div>
+              <div class="p-5">
+                <h3 class="font-extrabold text-lg tracking-tight" x-text="r.title"></h3>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2" x-text="r.desc"></p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <template x-for="t in r.tags" :key="t">
+                    <span class="px-2 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" x-text="t"></span>
+                  </template>
+                </div>
+                <div class="mt-4 flex items-center justify-between">
+                  <div class="text-sm text-slate-600 dark:text-slate-400" x-text="r.servings + ' servings'"></div>
+                  <div class="flex gap-2">
+                    <button class="px-3 py-2 rounded-xl bg-ink text-white dark:bg-white dark:text-slate-900 text-sm font-semibold" @click="openRecipe=r; showModal=true">View</button>
+                    <button class="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold" @click="addToPlanner(r)">Add to plan</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </template>
+        </div>
+
+        <!-- Empty state -->
+        <div x-show="filteredRecipes.length===0" class="mt-10 p-8 rounded-2xl bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 text-center">
+          <div class="text-xl font-bold">No recipes match</div>
+          <p class="text-slate-600 dark:text-slate-400 mt-1">Try clearing filters or searching for something else.</p>
+          <button class="mt-4 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="resetFilters(); searchQuery=''; activeCategory='All'">Reset all</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Plating Playbook Modal -->
+  <div x-show="openPlating" x-transition class="fixed inset-0 z-50 grid place-items-center p-4" style="display:none">
+    <div class="absolute inset-0 bg-black/60" @click="openPlating=false"></div>
+    <div class="relative w-full max-w-5xl rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadows animate-in">
+      <div class="p-6 md:p-8">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-widest font-bold text-brand-700 dark:text-brand-300">Plating Playbook</div>
+            <h3 class="text-2xl md:text-3xl font-extrabold tracking-tight">Reusable patterns for beautiful plates</h3>
+            <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">Learn five simple compositions you can apply to bowls, plates, and boards. Think of them as templates—swap in your ingredients and go.</p>
+          </div>
+          <button class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="openPlating=false" aria-label="Close">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div class="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Pattern cards -->
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="text-sm font-bold">1. The Swoosh</div>
+            <div class="mt-3 relative h-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <!-- visual guide -->
+              <div class="absolute inset-0 grid place-items-center">
+                <div class="w-56 h-56 rounded-full border border-dashed border-slate-300 dark:border-slate-600"></div>
+              </div>
+              <div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-12 bg-gradient-to-r from-emerald-200/80 to-emerald-200/0 dark:from-emerald-400/30 dark:to-emerald-400/0 rounded-full blur-[1px]"></div>
+              <div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-amber-200 dark:bg-amber-300/30"></div>
+              <div class="absolute top-8 right-10 w-8 h-8 rounded-full bg-rose-300/80"></div>
+            </div>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Swipe a spoonful of sauce across the plate. Anchor with a round element (protein or veg), then scatter garnishes in odd numbers.</p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="text-sm font-bold">2. The Clock</div>
+            <div class="mt-3 relative h-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <div class="absolute inset-0 grid place-items-center">
+                <div class="w-56 h-56 rounded-full border border-dashed border-slate-300 dark:border-slate-600"></div>
+                <div class="absolute w-2 h-2 rounded-full bg-slate-400" style="transform: translate(70px, -20px)"></div>
+                <div class="absolute w-16 h-16 rounded-full bg-emerald-200 dark:bg-emerald-300/30" style="transform: translate(-70px, 10px)"></div>
+                <div class="absolute w-24 h-10 rounded-full bg-amber-200 dark:bg-amber-300/30" style="transform: translate(10px, 60px)"></div>
+              </div>
+            </div>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Place components at 12, 4, and 8 o’clock. Keeps negative space open and looks balanced from any angle.</p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="text-sm font-bold">3. The Stack</div>
+            <div class="mt-3 relative h-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-28 h-10 rounded-full bg-amber-200 dark:bg-amber-300/30"></div>
+              <div class="absolute bottom-12 left-1/2 -translate-x-1/2 w-20 h-8 rounded-full bg-emerald-200 dark:bg-emerald-300/30"></div>
+              <div class="absolute bottom-16 left-1/2 -translate-x-1/2 w-12 h-6 rounded-full bg-rose-300/80"></div>
+            </div>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Layer a base, mid, and top. Offset slightly so each layer peeks out. Finish with height—a herb sprig or crunch.</p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="text-sm font-bold">4. The Bowl Nest</div>
+            <div class="mt-3 relative h-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <div class="absolute inset-0 grid place-items-center">
+                <div class="w-44 h-28 rounded-full bg-slate-100 dark:bg-slate-800"></div>
+                <div class="absolute w-10 h-10 rounded-full bg-rose-300/80" style="transform: translate(-50px, -10px)"></div>
+                <div class="absolute w-10 h-10 rounded-full bg-emerald-200" style="transform: translate(20px, -20px)"></div>
+                <div class="absolute w-10 h-10 rounded-full bg-amber-200" style="transform: translate(50px, 20px)"></div>
+              </div>
+            </div>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Create a shallow well with grains or noodles. Arrange toppings in sections, then drizzle sauce in a zig-zag.</p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="text-sm font-bold">5. The Stripe</div>
+            <div class="mt-3 relative h-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <div class="absolute left-8 top-6 bottom-6 w-10 rounded-full bg-emerald-200/80 dark:bg-emerald-400/30"></div>
+              <div class="absolute left-[4.5rem] top-10 bottom-10 w-24 rounded-2xl bg-amber-200 dark:bg-amber-300/30"></div>
+              <div class="absolute left-[11rem] top-16 w-8 h-8 rounded-full bg-rose-300/80"></div>
+              <div class="absolute left-[12.5rem] top-10 w-8 h-8 rounded-full bg-rose-300/80"></div>
+              <div class="absolute left-[14rem] top-14 w-8 h-8 rounded-full bg-rose-300/80"></div>
+            </div>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Lay a thick stripe of purée or yogurt. Place protein along it, then align garnish in a tidy row for rhythm.</p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="text-sm font-bold">Finishing touches</div>
+            <ul class="mt-3 text-sm text-slate-600 dark:text-slate-400 list-disc pl-5 space-y-1">
+              <li>Wipe the rim with a damp towel between steps.</li>
+              <li>Add contrast: something creamy, crunchy, and bright.</li>
+              <li>Micro-herbs beat big leaves for elegance.</li>
+              <li>Use warm plates for hot food—keeps sauces glossy.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipe Modal -->
+  <div x-show="showModal" class="fixed inset-0 z-50" style="display:none" aria-modal="true" role="dialog">
+    <div class="absolute inset-0 bg-black/60" @click="closeModal()"></div>
+    <div class="absolute inset-0 overflow-auto p-4 md:p-8">
+      <div class="mx-auto max-w-5xl rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadows animate-in">
+        <template x-if="openRecipe">
+          <div>
+            <div class="relative">
+              <img :src="openRecipe.image" :alt="openRecipe.title" class="w-full h-64 md:h-80 object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div class="absolute top-4 left-4 flex gap-2">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" x-text="openRecipe.time + ' min'"></span>
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" x-text="openRecipe.difficulty"></span>
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" x-text="openRecipe.servings + ' servings'"></span>
+              </div>
+              <button class="absolute top-4 right-4 p-2 rounded-xl bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700" @click="closeModal()" aria-label="Close">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+              <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div class="text-xs uppercase tracking-widest opacity-80">Recipe</div>
+                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight" x-text="openRecipe.title"></h2>
+                <p class="opacity-90 max-w-2xl" x-text="openRecipe.desc"></p>
+              </div>
+            </div>
+
+            <div class="p-6 md:p-8 grid lg:grid-cols-12 gap-8">
+              <!-- Left: ingredients & controls -->
+              <div class="lg:col-span-5">
+                <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-lg">Ingredients</h3>
+                    <div class="flex items-center gap-2">
+                      <label class="text-sm">Servings</label>
+                      <div class="flex items-center rounded-xl border border-slate-300 dark:border-slate-600 overflow-hidden">
+                        <button class="px-3 py-1.5 bg-white dark:bg-slate-900" @click="adjustServings(-1)">−</button>
+                        <input type="number" min="1" class="w-14 text-center bg-slate-100 dark:bg-slate-900 py-1.5 outline-none" x-model.number="currentServings" @change="clampServings()">
+                        <button class="px-3 py-1.5 bg-white dark:bg-slate-900" @click="adjustServings(1)">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <ul class="mt-4 space-y-2 text-sm">
+                    <template x-for="(ing, i) in scaledIngredients" :key="i">
+                      <li class="flex gap-3 items-start">
+                        <span class="mt-1 w-2 h-2 rounded-full bg-brand-500"></span>
+                        <div class="flex-1">
+                          <span class="font-semibold" x-text="ing.qty"></span>
+                          <span x-text="ing.unit"></span>
+                          <span x-text="ing.name"></span>
+                          <span class="text-slate-500" x-show="ing.notes" x-text="'— '+ing.notes"></span>
+                        </div>
+                      </li>
+                    </template>
+                  </ul>
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    <button class="px-3 py-2 rounded-xl bg-ink text-white dark:bg-white dark:text-slate-900 text-sm font-semibold" @click="addIngredientsToList()">Add to shopping list</button>
+                    <button class="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-semibold" @click="copyIngredients()">Copy ingredients</button>
+                    <button class="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-semibold no-print" @click="window.print()">Print</button>
+                  </div>
+                </div>
+
+                <div class="mt-6 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <h4 class="font-bold">Chef’s notes</h4>
+                  <ul class="mt-2 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300 space-y-1">
+                    <template x-for="n in openRecipe.notes" :key="n"><li x-text="n"></li></template>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Right: steps & plating -->
+              <div class="lg:col-span-7">
+                <div class="flex items-center gap-2 mb-3">
+                  <button :class="activeTab==='steps' ? 'bg-ink text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800'" class="px-3 py-2 rounded-xl text-sm font-semibold" @click="activeTab='steps'">Steps</button>
+                  <button :class="activeTab==='plating' ? 'bg-ink text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800'" class="px-3 py-2 rounded-xl text-sm font-semibold" @click="activeTab='plating'">Plating</button>
+                  <button :class="activeTab==='nutrition' ? 'bg-ink text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800'" class="px-3 py-2 rounded-xl text-sm font-semibold" @click="activeTab='nutrition'">Nutrition</button>
+                </div>
+
+                <!-- Steps -->
+                <div x-show="activeTab==='steps'" class="space-y-4">
+                  <template x-for="(s, idx) in openRecipe.steps" :key="idx">
+                    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-full bg-brand-600 text-white grid place-items-center font-bold" x-text="idx+1"></div>
+                        <div>
+                          <div class="font-semibold" x-text="s.title"></div>
+                          <p class="text-sm text-slate-700 dark:text-slate-300 mt-1" x-text="s.text"></p>
+                          <div class="mt-2 text-xs text-slate-500" x-show="s.tip">Tip: <span x-text="s.tip"></span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Plating -->
+                <div x-show="activeTab==='plating'" class="space-y-4">
+                  <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <div class="font-bold">Plating blueprint</div>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 mt-1" x-text="openRecipe.plating.summary"></p>
+                    <div class="mt-4 grid sm:grid-cols-2 gap-4">
+                      <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs uppercase tracking-widest font-bold text-slate-500">Technique</div>
+                        <div class="mt-1 font-semibold" x-text="openRecipe.plating.technique"></div>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1" x-text="openRecipe.plating.techniqueDesc"></p>
+                      </div>
+                      <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs uppercase tracking-widest font-bold text-slate-500">Garnish</div>
+                        <div class="mt-1 font-semibold" x-text="openRecipe.plating.garnish"></div>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1" x-text="openRecipe.plating.garnishDesc"></p>
+                      </div>
+                    </div>
+                    <!-- Visual plate -->
+                    <div class="mt-6 relative h-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden">
+                      <div class="absolute inset-0 grid place-items-center">
+                        <div class="w-64 h-64 rounded-full border border-dashed border-slate-300 dark:border-slate-600"></div>
+                      </div>
+                      <!-- dynamic shapes based on technique -->
+                      <template x-if="openRecipe.plating.technique==='Swoosh'">
+                        <div>
+                          <div class="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-12 bg-gradient-to-r from-emerald-200/80 to-emerald-200/0 dark:from-emerald-400/30 dark:to-emerald-400/0 rounded-full"></div>
+                          <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-amber-200 dark:bg-amber-300/30"></div>
+                          <div class="absolute top-10 right-16 w-8 h-8 rounded-full bg-rose-300/80"></div>
+                          <div class="absolute top-14 right-28 w-8 h-8 rounded-full bg-rose-300/80"></div>
+                          <div class="absolute top-12 right-40 w-8 h-8 rounded-full bg-rose-300/80"></div>
+                        </div>
+                      </template>
+                      <template x-if="openRecipe.plating.technique==='Clock'">
+                        <div>
+                          <div class="absolute w-16 h-16 rounded-full bg-emerald-200 dark:bg-emerald-300/30" style="transform: translate(180px, 60px)"></div>
+                          <div class="absolute w-24 h-10 rounded-full bg-amber-200 dark:bg-amber-300/30" style="transform: translate(120px, 140px)"></div>
+                          <div class="absolute w-2 h-2 rounded-full bg-slate-400" style="transform: translate(240px, 120px)"></div>
+                        </div>
+                      </template>
+                      <template x-if="openRecipe.plating.technique==='Stack'">
+                        <div>
+                          <div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-28 h-10 rounded-full bg-amber-200 dark:bg-amber-300/30"></div>
+                          <div class="absolute bottom-14 left-1/2 -translate-x-1/2 w-20 h-8 rounded-full bg-emerald-200 dark:bg-emerald-300/30"></div>
+                          <div class="absolute bottom-20 left-1/2 -translate-x-1/2 w-12 h-6 rounded-full bg-rose-300/80"></div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Nutrition -->
+                <div x-show="activeTab==='nutrition'">
+                  <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs uppercase tracking-widest text-slate-500">Calories</div>
+                        <div class="text-2xl font-extrabold" x-text="openRecipe.nutrition.cal"></div>
+                      </div>
+                      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs uppercase tracking-widest text-slate-500">Protein</div>
+                        <div class="text-2xl font-extrabold" x-text="openRecipe.nutrition.protein + 'g'"></div>
+                      </div>
+                      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs uppercase tracking-widest text-slate-500">Carbs</div>
+                        <div class="text-2xl font-extrabold" x-text="openRecipe.nutrition.carbs + 'g'"></div>
+                      </div>
+                      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs uppercase tracking-widest text-slate-500">Fat</div>
+                        <div class="text-2xl font-extrabold" x-text="openRecipe.nutrition.fat + 'g'"></div>
+                      </div>
+                    </div>
+                    <p class="mt-3 text-xs text-slate-500">Estimates per serving.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-6 md:px-8 pb-8 flex flex-wrap gap-3">
+              <button class="px-4 py-2.5 rounded-xl bg-brand-600 text-white font-semibold" @click="addToPlanner(openRecipe)">Add to meal plan</button>
+              <button class="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800" @click="toggleFavorite(openRecipe.id)">
+                <span x-text="isFav(openRecipe.id) ? 'Remove from favorites' : 'Save to favorites'"></span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Planner Drawer -->
+  <div x-show="openPlanner" class="fixed inset-0 z-50" style="display:none">
+    <div class="absolute inset-0 bg-black/50" @click="openPlanner=false"></div>
+    <div class="absolute right-0 top-0 h-full w-full sm:w-[420px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadows p-6 overflow-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-extrabold tracking-tight">Plan & Shop</h3>
+        <button class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="openPlanner=false" aria-label="Close">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="mt-4">
+        <div class="text-sm font-semibold">This week</div>
+        <div class="mt-2 grid grid-cols-7 gap-2 text-center text-xs">
+          <template x-for="d in days" :key="d">
+            <div class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold" x-text="d"></div>
+              <div class="mt-1 space-y-1">
+                <template x-for="rid in planner[d]" :key="rid">
+                  <div class="px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 truncate" x-text="recipeById(rid).title"></div>
+                </template>
+                <button class="w-full text-slate-500 hover:text-slate-900 dark:hover:text-white" @click="addToDay(d)">+ Add</button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <div class="text-sm font-semibold">Shopping list</div>
+        <div class="mt-2 space-y-2 max-h-64 overflow-auto">
+          <template x-for="(item, idx) in shoppingList" :key="idx">
+            <div class="flex items-center gap-2 text-sm">
+              <input type="checkbox" class="rounded" x-model="item.done">
+              <div :class="item.done ? 'line-through opacity-60' : ''" class="flex-1">
+                <span x-text="item.qty"></span>
+                <span x-text="item.unit"></span>
+                <span x-text="item.name"></span>
+              </div>
+              <button class="text-slate-400 hover:text-rose-500" @click="removeShopping(idx)" aria-label="Remove">✕</button>
+            </div>
+          </template>
+          <div x-show="shoppingList.length===0" class="text-sm text-slate-500">No items yet.</div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" @click="copyShopping()">Copy</button>
+          <button class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" @click="clearShopping()">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile filter drawer -->
+  <div x-show="drawer" class="fixed inset-0 z-50" style="display:none">
+    <div class="absolute inset-0 bg-black/50" @click="drawer=false"></div>
+    <div class="absolute left-0 top-0 h-full w-[88%] max-w-[360px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-6 overflow-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold">Filters</h3>
+        <button class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="drawer=false" aria-label="Close">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="text-sm font-semibold">Diet</label>
+          <div class="mt-2 grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="rounded" x-model="filters.veg"> Vegetarian</label>
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="rounded" x-model="filters.glutenFree"> Gluten-free</label>
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="rounded" x-model="filters.dairyFree"> Dairy-free</label>
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="rounded" x-model="filters.quick"> ≤ 15 min</label>
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-semibold">Skill</label>
+          <select x-model="filters.skill" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <option value="">Any</option>
+            <option>Beginner</option>
+            <option>Easy</option>
+            <option>Confident</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm font-semibold">Max time</label>
+          <input type="range" min="5" max="60" step="5" x-model.number="filters.time" class="w-full">
+          <div class="text-xs text-slate-500" x-text="filters.time + ' min'"></div>
+        </div>
+        <button class="w-full mt-2 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" @click="resetFilters()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-12 border-t border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <div class="font-extrabold text-lg">Plated</div>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">Learn simple dishes with confidence. Cook well, plate better.</p>
+        </div>
+        <div class="text-sm">
+          <div class="font-semibold">Resources</div>
+          <ul class="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
+            <li><button class="underline" @click="openPlating=true">Plating playbook</button></li>
+            <li><a href="#recipes" class="underline">All recipes</a></li>
+            <li><button class="underline" @click="openPlanner=true">Plan & shop</button></li>
+          </ul>
+        </div>
+        <div class="text-sm">
+          <div class="font-semibold">Get updates</div>
+          <div class="mt-2 flex gap-2">
+            <input type="email" placeholder="Email address" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" aria-label="Email address">
+            <button class="px-4 py-2.5 rounded-xl bg-ink text-white dark:bg-white dark:text-slate-900 font-semibold">Subscribe</button>
+          </div>
+          <p class="text-xs text-slate-500 mt-2">No spam, unsubscribe anytime.</p>
+        </div>
+      </div>
+      <div class="mt-8 text-xs text-slate-500">© <span x-text="new Date().getFullYear()"></span> Plated. Built for home cooks.</div>
+    </div>
+  </footer>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('kitchenApp', () => ({
+    // Theme
+    dark: false,
+    init() {
+      try {
+        const saved = localStorage.getItem('plated_dark');
+        if (saved !== null) this.dark = saved === '1';
+        else this.dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', this.dark);
+        const fav = localStorage.getItem('plated_favs');
+        if (fav) this.favorites = JSON.parse(fav);
+        const list = localStorage.getItem('plated_shop');
+        if (list) this.shoppingList = JSON.parse(list);
+        const plan = localStorage.getItem('plated_planner');
+        if (plan) this.planner = JSON.parse(plan);
+      } catch(e) {}
+    },
+    toggleDark() {
+      this.dark = !this.dark;
+      document.documentElement.classList.toggle('dark', this.dark);
+      try { localStorage.setItem('plated_dark', this.dark ? '1' : '0'); } catch(e){}
+    },
+
+    // UI state
+    searchQuery: '',
+    activeCategory: 'All',
+    categories: ['All','Quick <15','Vegetarian','Breakfast','Pasta','Salads','Bowls','Soups'],
+    drawer: false,
+    openPlating: false,
+    openPlanner: false,
+    showModal: false,
+    openRecipe: null,
+    activeTab: 'steps',
+    favoritesOnly: false,
+    favorites: [],
+
+    // Planner
+    days: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    planner: { Mon:[], Tue:[], Wed:[], Thu:[], Fri:[], Sat:[], Sun:[] },
+
+    // Filters
+    filters: { veg:false, glutenFree:false, dairyFree:false, quick:false, skill:'', time: 30 },
+    resetFilters(){ this.filters = { veg:false, glutenFree:false, dairyFree:false, quick:false, skill:'', time: 30 }; },
+
+    // Shopping
+    shoppingList: [],
+
+    // Servings
+    currentServings: 2,
+
+    // Recipes
+    recipes: [
+      {
+        id: 'avocado-toast',
+        title: 'Avocado Toast with Poached Egg',
+        desc: 'Crunchy sourdough, creamy avocado, jammy egg, and chili crunch.',
+        time: 10,
+        difficulty: 'Beginner',
+        servings: 2,
+        tags: ['Breakfast','Vegetarian','Quick <15'],
+        image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Use ripe but firm avocado for best texture.', 'Add lemon to prevent browning.', 'Swap chili crisp for smoked paprika if preferred.'],
+        ingredients: [
+          { qty: 2, unit: 'slices', name: 'sourdough bread' },
+          { qty: 1, unit: '', name: 'ripe avocado', notes: 'small' },
+          { qty: 1, unit: 'tbsp', name: 'lemon juice' },
+          { qty: 2, unit: '', name: 'eggs' },
+          { qty: 1, unit: 'tsp', name: 'white vinegar' },
+          { qty: 1, unit: 'tbsp', name: 'chili crisp' },
+          { qty: 1, unit: 'pinch', name: 'flaky salt' },
+          { qty: 1, unit: 'pinch', name: 'black pepper' },
+        ],
+        steps: [
+          { title: 'Toast bread', text: 'Toast sourdough until deeply golden and crisp.', tip: 'Rub with a garlic clove for extra aroma.' },
+          { title: 'Prep avocado', text: 'Mash avocado with lemon juice, salt, and pepper.' },
+          { title: 'Poach eggs', text: 'Simmer water with vinegar, swirl, and poach eggs 3 minutes for jammy yolks.', tip: 'Crack egg into a small bowl first.' },
+          { title: 'Assemble', text: 'Spread avocado, top with egg, chili crisp, and flaky salt.' },
+        ],
+        plating: {
+          summary: 'Clock composition with height from the egg.',
+          technique: 'Clock',
+          techniqueDesc: 'Place toast at 6 o’clock, egg at 12, chili oil dots at 4 and 8.',
+          garnish: 'Microgreens and sesame',
+          garnishDesc: 'Adds freshness and crunch.'
+        },
+        nutrition: { cal: 380, protein: 15, carbs: 32, fat: 22 }
+      },
+      {
+        id: 'lemon-garlic-pasta',
+        title: 'Lemon Garlic Pasta',
+        desc: 'Silky, bright, and buttery pasta using pantry staples.',
+        time: 15,
+        difficulty: 'Easy',
+        servings: 2,
+        tags: ['Pasta','Vegetarian','Quick <15'],
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Reserve pasta water—it’s your sauce.', 'Use Pecorino or Parmesan.'],
+        ingredients: [
+          { qty: 180, unit: 'g', name: 'spaghetti' },
+          { qty: 3, unit: 'tbsp', name: 'olive oil' },
+          { qty: 3, unit: 'cloves', name: 'garlic', notes: 'thin sliced' },
+          { qty: 1, unit: '', name: 'lemon', notes: 'zest + juice' },
+          { qty: 30, unit: 'g', name: 'Parmesan', notes: 'finely grated' },
+          { qty: 1, unit: 'tbsp', name: 'butter' },
+          { qty: 1, unit: 'pinch', name: 'chili flakes' },
+          { qty: 1, unit: 'handful', name: 'parsley', notes: 'chopped' },
+        ],
+        steps: [
+          { title: 'Cook pasta', text: 'Boil salted water and cook pasta 1 minute less than package.' },
+          { title: 'Aromatics', text: 'Gently cook garlic and chili in oil until fragrant.', tip: 'Don’t brown the garlic.' },
+          { title: 'Emulsify', text: 'Add 1/2 cup pasta water, lemon, butter, and cheese, tossing to a glossy sauce.' },
+          { title: 'Finish', text: 'Toss in pasta and parsley, adjust with more water for silkiness.' },
+        ],
+        plating: {
+          summary: 'Classic swoosh with twirled nest.',
+          technique: 'Swoosh',
+          techniqueDesc: 'Swipe a little sauce, place pasta nest, scatter zest and herbs.',
+          garnish: 'Lemon zest, extra cheese',
+          garnishDesc: 'Adds aroma and contrast.'
+        },
+        nutrition: { cal: 520, protein: 17, carbs: 72, fat: 18 }
+      },
+      {
+        id: 'caprese-salad',
+        title: 'Caprese Salad, Upgraded',
+        desc: 'Ripe tomatoes, creamy mozzarella, basil oil, and balsamic pearls.',
+        time: 10,
+        difficulty: 'Beginner',
+        servings: 2,
+        tags: ['Salads','Vegetarian','Quick <15'],
+        image: 'https://images.unsplash.com/photo-1498579809087-ef1e558fd022?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Salt tomatoes early to draw out juices.', 'Tear mozzarella rather than slicing.'],
+        ingredients: [
+          { qty: 3, unit: '', name: 'ripe tomatoes', notes: 'mixed colors' },
+          { qty: 200, unit: 'g', name: 'fresh mozzarella' },
+          { qty: 8, unit: '', name: 'basil leaves' },
+          { qty: 2, unit: 'tbsp', name: 'olive oil' },
+          { qty: 1, unit: 'tbsp', name: 'balsamic glaze' },
+          { qty: 1, unit: 'pinch', name: 'flaky salt' },
+        ],
+        steps: [
+          { title: 'Slice', text: 'Slice tomatoes and season with salt.' },
+          { title: 'Arrange', text: 'Layer tomatoes and torn mozzarella on a plate.' },
+          { title: 'Dress', text: 'Drizzle oil and balsamic, scatter torn basil.' },
+        ],
+        plating: {
+          summary: 'Clock layout with color blocks.',
+          technique: 'Clock',
+          techniqueDesc: 'Alternate red and white at 12, 4, and 8 with basil bridges.',
+          garnish: 'Basil oil',
+          garnishDesc: 'Blend basil with oil for vibrant dots.'
+        },
+        nutrition: { cal: 310, protein: 14, carbs: 12, fat: 24 }
+      },
+      {
+        id: 'sheet-chicken',
+        title: 'Sheet Pan Chicken & Veggies',
+        desc: 'One pan, big flavor. Crispy edges, juicy chicken, herby finish.',
+        time: 30,
+        difficulty: 'Easy',
+        servings: 4,
+        tags: ['Bowls','Gluten-free'],
+        image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Cut veggies even for even roasting.', 'Finish with lemon.'],
+        ingredients: [
+          { qty: 600, unit: 'g', name: 'chicken thighs', notes: 'boneless' },
+          { qty: 2, unit: '', name: 'bell peppers', notes: 'sliced' },
+          { qty: 1, unit: '', name: 'red onion', notes: 'wedges' },
+          { qty: 300, unit: 'g', name: 'baby potatoes', notes: 'halved' },
+          { qty: 3, unit: 'tbsp', name: 'olive oil' },
+          { qty: 2, unit: 'tsp', name: 'smoked paprika' },
+          { qty: 1, unit: 'tsp', name: 'dried oregano' },
+          { qty: 1, unit: '', name: 'lemon' },
+        ],
+        steps: [
+          { title: 'Season', text: 'Toss everything with oil, spices, salt, and pepper.' },
+          { title: 'Roast', text: 'Roast at 220°C for 20–25 minutes until charred and cooked.' },
+          { title: 'Finish', text: 'Squeeze lemon, scatter herbs.' },
+        ],
+        plating: {
+          summary: 'Family-style platter with height.',
+          technique: 'Stack',
+          techniqueDesc: 'Pile potatoes, top with chicken, tuck peppers around.',
+          garnish: 'Parsley and lemon zest',
+          garnishDesc: 'Brightness and aroma.'
+        },
+        nutrition: { cal: 480, protein: 34, carbs: 28, fat: 26 }
+      },
+      {
+        id: 'mug-pancake',
+        title: '5-Minute Microwave Mug Pancake',
+        desc: 'Fluffy single-serve pancake for busy mornings.',
+        time: 5,
+        difficulty: 'Beginner',
+        servings: 1,
+        tags: ['Breakfast','Quick <15','Vegetarian'],
+        image: 'https://images.unsplash.com/photo-1528207776546-365bb1516d48?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Don’t overmix; a few lumps are fine.', 'Microwaves vary—start with 90 seconds.'],
+        ingredients: [
+          { qty: 4, unit: 'tbsp', name: 'all-purpose flour' },
+          { qty: 1, unit: 'tbsp', name: 'sugar' },
+          { qty: .25, unit: 'tsp', name: 'baking powder' },
+          { qty: 1, unit: 'pinch', name: 'salt' },
+          { qty: 3, unit: 'tbsp', name: 'milk' },
+          { qty: 1, unit: 'tbsp', name: 'oil' },
+          { qty: .25, unit: 'tsp', name: 'vanilla' },
+        ],
+        steps: [
+          { title: 'Mix', text: 'Whisk dry ingredients, then add wet and stir until combined.' },
+          { title: 'Cook', text: 'Microwave 90 seconds, then 10–15 second bursts until set.' },
+          { title: 'Top', text: 'Add butter, maple syrup, or berries.' },
+        ],
+        plating: {
+          summary: 'Centered circle with stripe garnish.',
+          technique: 'Stripe',
+          techniqueDesc: 'Ladle syrup stripe, place pancake, dot berries along the line.',
+          garnish: 'Berries and mint',
+          garnishDesc: 'Freshness and color pop.'
+        },
+        nutrition: { cal: 340, protein: 6, carbs: 52, fat: 12 }
+      },
+      {
+        id: 'tomato-soup',
+        title: 'Tomato Basil Soup',
+        desc: 'Velvety, comforting, and perfect with grilled cheese.',
+        time: 25,
+        difficulty: 'Easy',
+        servings: 3,
+        tags: ['Soups','Vegetarian'],
+        image: 'https://images.unsplash.com/photo-1547592166-23ac45768daf?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Blend carefully—hot soup!'],
+        ingredients: [
+          { qty: 800, unit: 'g', name: 'canned tomatoes' },
+          { qty: 1, unit: '', name: 'onion', notes: 'diced' },
+          { qty: 2, unit: 'cloves', name: 'garlic' },
+          { qty: 2, unit: 'tbsp', name: 'olive oil' },
+          { qty: 250, unit: 'ml', name: 'vegetable stock' },
+          { qty: 60, unit: 'ml', name: 'cream' },
+          { qty: 1, unit: 'handful', name: 'basil' },
+        ],
+        steps: [
+          { title: 'Sweat', text: 'Cook onion and garlic in oil until soft.' },
+          { title: 'Simmer', text: 'Add tomatoes and stock, simmer 15 minutes.' },
+          { title: 'Blend', text: 'Blend until smooth, stir in cream and basil.' },
+        ],
+        plating: {
+          summary: 'Bowl nest with swirl.',
+          technique: 'Stack',
+          techniqueDesc: 'Ladle soup, swirl cream, top with basil oil dots.',
+          garnish: 'Croutons',
+          garnishDesc: 'Crunch contrast.'
+        },
+        nutrition: { cal: 210, protein: 4, carbs: 24, fat: 11 }
+      },
+      {
+        id: 'yogurt-parfait',
+        title: 'Greek Yogurt Parfait',
+        desc: 'Layers of creamy yogurt, honey, nuts, and berries.',
+        time: 5,
+        difficulty: 'Beginner',
+        servings: 1,
+        tags: ['Breakfast','Vegetarian','Quick <15','Gluten-free'],
+        image: 'https://images.unsplash.com/photo-1488477304112-4944851de03d?w=1200&q=80&auto=format&fit=crop',
+        notes: ['Use thick yogurt to hold layers.'],
+        ingredients: [
+          { qty: 170, unit: 'g', name: 'Greek yogurt' },
+          { qty: 1, unit: 'tbsp', name: 'honey' },
+          { qty: 30, unit: 'g', name: 'granola' },
+          { qty: 80, unit: 'g', name: 'mixed berries' },
+          { qty: 1, unit: 'tbsp', name: 'toasted nuts' },
+        ],
+        steps: [
+          { title: 'Layer', text: 'Spoon yogurt, drizzle honey, add berries and granola. Repeat.' },
+          { title: 'Finish', text: 'Top with nuts and a few mint leaves.' },
+        ],
+        plating: {
+          summary: 'Glass parfait with stripes.',
+          technique: 'Stripe',
+          techniqueDesc: 'Keep layers visible; finish with a tidy nut line.',
+          garnish: 'Mint',
+          garnishDesc: 'Aroma and color.'
+        },
+        nutrition: { cal: 360, protein: 18, carbs: 44, fat: 12 }
+      },
+      {
+        id: 'veggie-noodles',
+        title: 'Stir-Fry Veggie Noodles',
+        desc: 'Slurpy noodles, crisp veg, glossy sauce—weeknight hero.',
+        time: 15,
+        difficulty: 'Easy',
+        servings: 2,
+        tags: ['Bowls','Quick <15','Vegetarian'],
+        image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&q=80&auto=format&fit=crop',
+        notes: ['High heat = better char.'],
+        ingredients: [
+          { qty: 200, unit: 'g', name: 'noodles' },
+          { qty: 2, unit: 'tbsp', name: 'soy sauce' },
+          { qty: 1, unit: 'tbsp', name: 'oyster sauce' },
+          { qty: 1, unit: 'tsp', name: 'sesame oil' },
+          { qty: 2, unit: 'cloves', name: 'garlic' },
+          { qty: 1, unit: '', name: 'carrot', notes: 'julienned' },
+          { qty: 1, unit: '', name: 'bell pepper', notes: 'sliced' },
+          { qty: 100, unit: 'g', name: 'snap peas' },
+        ],
+        steps: [
+          { title: 'Boil', text: 'Cook noodles, drain.' },
+          { title: 'Stir-fry', text: 'High heat, oil, garlic, veg 2–3 min.' },
+          { title: 'Sauce', text: 'Add sauces, noodles, toss until glossy.' },
+        ],
+        plating: {
+          summary: 'Bowl nest, toppings in sections.',
+          technique: 'Clock',
+          techniqueDesc: 'Place noodles as a nest, arrange veg at clock points.',
+          garnish: 'Sesame and scallions',
+          garnishDesc: 'Nutty aroma, fresh bite.'
+        },
+        nutrition: { cal: 480, protein: 14, carbs: 78, fat: 12 }
+      },
+    ],
+
+    // Computed
+    get filteredRecipes() {
+      let list = this.recipes.slice();
+
+      // Category tab
+      if (this.activeCategory !== 'All') {
+        if (this.activeCategory === 'Quick <15') {
+          list = list.filter(r => r.time <= 15);
+        } else {
+          list = list.filter(r => r.tags.includes(this.activeCategory));
+        }
+      }
+
+      // Filters
+      if (this.filters.veg) list = list.filter(r => r.tags.includes('Vegetarian'));
+      if (this.filters.glutenFree) list = list.filter(r => r.tags.includes('Gluten-free'));
+      if (this.filters.dairyFree) list = list.filter(r => r.tags.includes('Dairy-free'));
+      if (this.filters.quick) list = list.filter(r => r.time <= 15);
+      if (this.filters.skill) list = list.filter(r => r.difficulty === this.filters.skill);
+      if (this.filters.time) list = list.filter(r => r.time <= this.filters.time);
+
+      // Search
+      const q = this.searchQuery.trim().toLowerCase();
+      if (q) {
+        list = list.filter(r => {
+          const hay = [r.title, r.desc, ...r.tags, ...r.ingredients.map(i => i.name)].join(' ').toLowerCase();
+          return hay.includes(q);
+        });
+      }
+
+      // Favorites
+      if (this.favoritesOnly) {
+        list = list.filter(r => this.favorites.includes(r.id));
+      }
+
+      return list;
+    },
+
+    get scaledIngredients() {
+      if (!this.openRecipe) return [];
+      const base = this.openRecipe.servings;
+      const factor = (this.currentServings || 1) / base;
+      return this.openRecipe.ingredients.map(ing => {
+        const q = typeof ing.qty === 'number' ? +(ing.qty * factor).toFixed(2) : ing.qty;
+        // Clean 0.5 .25 etc
+        const pretty = (typeof q === 'number') ? (Math.abs(q - Math.round(q)) < 0.001 ? Math.round(q) : q) : q;
+        return { ...ing, qty: pretty };
+      });
+    },
+
+    // Actions
+    closeModal(){ this.showModal=false; setTimeout(()=>{ this.openRecipe=null; this.activeTab='steps'; }, 200); },
+    adjustServings(delta){
+      this.currentServings = Math.max(1, (this.currentServings || 2) + delta);
+    },
+    clampServings(){ if (this.currentServings < 1) this.currentServings = 1; },
+
+    isFav(id){ return this.favorites.includes(id); },
+    toggleFavorite(id){
+      if (this.isFav(id)) this.favorites = this.favorites.filter(x => x!==id);
+      else this.favorites.push(id);
+      try { localStorage.setItem('plated_favs', JSON.stringify(this.favorites)); } catch(e){}
+    },
+    toggleFavoritesOnly(){ this.favoritesOnly = !this.favoritesOnly; },
+
+    addIngredientsToList(){
+      if (!this.openRecipe) return;
+      const items = this.scaledIngredients.map(i => ({
+        qty: i.qty, unit: i.unit, name: i.name, notes: i.notes || '', done: false
+      }));
+      // Combine duplicates by name & unit
+      const map = {};
+      [...this.shoppingList, ...items].forEach(it => {
+        const key = (it.name+'|'+it.unit).toLowerCase();
+        if (!map[key]) map[key] = { ...it };
+        else {
+          // sum if numeric
+          if (typeof map[key].qty === 'number' && typeof it.qty === 'number') map[key].qty = +(map[key].qty + it.qty).toFixed(2);
+          if (it.notes && !map[key].notes) map[key].notes = it.notes;
+        }
+      });
+      this.shoppingList = Object.values(map);
+      this.persistShopping();
+    },
+    copyIngredients(){
+      const text = this.scaledIngredients.map(i => `${i.qty} ${i.unit} ${i.name}${i.notes ? ' — '+i.notes:''}`).join('\n');
+      navigator.clipboard?.writeText(text);
+    },
+    persistShopping(){ try { localStorage.setItem('plated_shop', JSON.stringify(this.shoppingList)); } catch(e){} },
+    clearShopping(){ this.shoppingList = []; this.persistShopping(); },
+    removeShopping(idx){ this.shoppingList.splice(idx,1); this.persistShopping(); },
+    copyShopping(){
+      const text = this.shoppingList.map(i => `• ${i.qty} ${i.unit} ${i.name}${i.notes ? ' ('+i.notes+')':''}`).join('\n');
+      navigator.clipboard?.writeText(text);
+    },
+
+    addToPlanner(r){
+      // quick add to next empty day or today
+      const today = new Date().getDay(); // 0 Sun ... map to our days (Mon first)
+      const order = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const idx = (today + 6) % 7; // shift so Mon=0
+      const day = order[idx];
+      if (!this.planner[day].includes(r.id)) this.planner[day].push(r.id);
+      this.persistPlanner();
+      this.openPlanner = true;
+    },
+    addToDay(d){
+      // pick last viewed recipe or prompt first
+      const r = this.openRecipe || this.filteredRecipes[0];
+      if (!r) return;
+      if (!this.planner[d].includes(r.id)) this.planner[d].push(r.id);
+      this.persistPlanner();
+    },
+    persistPlanner(){ try { localStorage.setItem('plated_planner', JSON.stringify(this.planner)); } catch(e){} },
+    recipeById(id){ return this.recipes.find(r => r.id === id) || { title: 'Recipe' }; },
+
+  }))
+});
+</script>
+</body>
+</html>
